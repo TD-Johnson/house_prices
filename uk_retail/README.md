@@ -155,7 +155,7 @@ SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM
     LIMIT(10);
 
 | customer_id |  income |
-|-----------|-----------|
+|-------|-------|
 | 14646 | 280206.02 |
 | 18102 | 259657.30 |
 | 17450 | 194550.79 |
