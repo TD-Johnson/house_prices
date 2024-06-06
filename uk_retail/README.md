@@ -28,7 +28,9 @@ Credit to Daqing Chen (chend@lsbu.ac.uk), school of engineering, London South Ba
 
 ### 1. How many orders did the company receive in this time period?
 
+~~~~sql
 SELECT COUNT(DISTINCT(invoice_no)) FROM retail;
+~~~~
 
 |count| 
 |---|
