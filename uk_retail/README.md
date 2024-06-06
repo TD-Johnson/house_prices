@@ -40,8 +40,9 @@ The company received 25'900 orders during this period.
 
 ### 2. What was the total turnover in this time period?
 
-
+~~~~sql
 SELECT ROUND(SUM(quantity * unit_price)::numeric, 2) AS turnover FROM retail;
+~~~~
 
    |turnover| 
 |-------------|
@@ -52,8 +53,10 @@ But was all of this incoming? How much was outgoing.
 
 #### 2.1 How much money was spent during this period?
 
+~~~~sql
 SELECT SUM(quantity * unit_price) AS money_lost FROM retail
     WHERE unit_price < 0 OR quantity < 0;
+~~~~~
 
 | money_lost |
 | ------------ |
@@ -64,11 +67,13 @@ SELECT SUM(quantity * unit_price) AS money_lost FROM retail
 
 #### 2.2 What customers/things were responsible for the outgoings, and how much was spent on each? Display the top 10.
 
+~~~~sq;
 SELECT description,  ROUND(SUM(quantity * unit_price)::numeric, 2) AS money_lost FROM retail
     WHERE unit_price < 0 OR quantity < 0 
     GROUP BY description
     ORDER BY money_lost ASC
     LIMIT (10);
+~~~~
 
 |            description             | money_lost | 
 |------------------------------------|------------ |
@@ -89,11 +94,13 @@ So, amazon fees were by far the most expensive.
 
 #### 2.3 On the contrary, what customers were resonsible for the most income?
 
+~~~~sql
 SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM retail
     WHERE quantity > 0 AND unit_price > 0
     GROUP BY customer_id
     ORDER BY income DESC
     LIMIT(10);
+~~~~
 
 | customer_id |   income |
 |-----------|------------|
@@ -112,11 +119,13 @@ SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM
 
 Interestingly, the main source of income does not have a customer id. It would be useful to find out who, or what, this is.
 
+~~~~sql
 SELECT description, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM retail
     WHERE quantity > 0 AND unit_price > 0 AND customer_id IS NULL
     GROUP BY description
     ORDER BY income DESC
     LIMIT(10);
+~~~~
 
  |           description            |  income  | 
 |-----------------------------------|-----------|
@@ -138,8 +147,10 @@ Lets check how these refunds affect total income.
 
 #### 2.4 What was total income from customer sales only.
 
+~~~~sql
 SELECT ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM retail
     WHERE quantity > 0 AND unit_price > 0 AND customer_id IS NOT NULL;
+~~~~
 
  |  income|
 |------------|
@@ -150,11 +161,13 @@ Ok, so total turnover was around 9.7 million, some of this was outgoings, some w
 
 #### 2.5 And who were the most valuable customers in total revenue?
 
+~~~~sql
 SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM retail
     WHERE quantity > 0 AND unit_price > 0 AND customer_id IS NOT NULL
     GROUP BY customer_id
     ORDER BY income DESC
     LIMIT(10);
+~~~~
 
 | customer_id |  income |
 |-------|-------|
@@ -171,12 +184,14 @@ SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income FROM
 
 So how many separate orders have these customers placed?
 
+~~~~sql
 SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, COUNT(DISTINCT(invoice_no)) AS number_of_orders 
     FROM retail
     WHERE quantity > 0 AND unit_price > 0 AND customer_id IS NOT NULL
     GROUP BY customer_id
     ORDER BY income DESC
     LIMIT(10);
+~~~~
 
 | customer_id |  income   | number_of_orders| 
 |-------------|-----------|------------------|
@@ -195,11 +210,13 @@ SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, COU
 So we can see that those that have spent the most money in total, have not necessarily done so due to ordering multiple times. 
 In fact, one customer '16446' ordered on two separate occasions, but spent 168'472 pounds in total. Lets have a look at these two orders and see how many things were ordered in each.
 
+~~~~sql
 SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, invoice_no, COUNT(description) AS number_of_items
     FROM retail
     WHERE quantity > 0 AND unit_price > 0 AND customer_id = 16446 
     GROUP BY invoice_no, customer_id
     ORDER BY income DESC;
+~~~~
 
 | customer_id |  income   | invoice_no | number_of_items |
 |-------------|-----------|------------|-----------------|
@@ -210,11 +227,13 @@ SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, inv
 
 Interesting. Before we move on I should just check that none of this was refunded.
 
+~~~~sql
 SELECT customer_id, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, invoice_no, COUNT(description) AS number_of_items
     FROM retail
     WHERE customer_id = 16446 
     GROUP BY invoice_no, customer_id
     ORDER BY income DESC;
+~~~~
 
 | customer_id |   income   | invoice_no | number_of_items |
 |-------------|------------|------------|-----------------|
@@ -227,11 +246,13 @@ Yes, the big order was refunded. Perhaps the order was a mistake.
 
 ### 3. What product generated the most income?
 
+~~~~sql
 SELECT description, unit_price, ROUND(SUM(quantity * unit_price)::numeric, 2) AS income, COUNT(invoice_no) AS number_of_orders FROM retail 
     WHERE unit_price > 0
     GROUP BY description, unit_price
     ORDER BY income DESC
     LIMIT(10);
+~~~~
 
 |            description             | unit_price |  income  | number_of_orders |
 |------------------------------------|------------|----------|------------------|
@@ -252,12 +273,13 @@ We can see that the cakestand generated the most income. Oddly it was valued at 
 
 ### 4. What are the monthly sales?
 
+~~~~sql
 SELECT DATE_TRUNC('month', invoice_date) AS month, ROUND(SUM(unit_price * quantity)::numeric, 2) AS turnover
     FROM retail
     WHERE customer_id IS NOT NULL
     GROUP BY month
     ORDER BY month;
-
+~~~~
 
 |        month        |  turnover  |
 |---------------------|------------|
@@ -289,13 +311,14 @@ One thing to notice is that there appears to be no data for november 2010. Perha
 
 #### 4.1 How does the current months turnover compare to the previous month?
 
+~~~~sql
 SELECT month, turnover, ROUND((turnover - LAG(turnover) OVER (ORDER BY month))/LAG(turnover) OVER (ORDER BY month) * 100::numeric, 2) AS growth_rate 
 FROM (
     SELECT DATE_TRUNC('month', invoice_date) AS month, ROUND(SUM(unit_price * quantity)::numeric, 2) AS turnover
     FROM retail
     WHERE customer_id IS NOT NULL
     GROUP BY month) AS monthly_sales;
-
+~~~~
 
 |        month        |  turnover  | growth_rate |
 |---------------------|------------|-------------|
