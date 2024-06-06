@@ -67,7 +67,7 @@ SELECT SUM(quantity * unit_price) AS money_lost FROM retail
 
 #### 2.2 What customers/things were responsible for the outgoings, and how much was spent on each? Display the top 10.
 
-~~~~sq;
+~~~~sql
 SELECT description,  ROUND(SUM(quantity * unit_price)::numeric, 2) AS money_lost FROM retail
     WHERE unit_price < 0 OR quantity < 0 
     GROUP BY description
